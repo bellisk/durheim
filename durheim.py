@@ -40,7 +40,11 @@ def run():
                 print "Downloaded photo " + filename
                 break
         
-        
+        details = {}
+        for tr in soup.table:
+            for key_td, value_td in tr:
+                details[key_td.text] = value_td.text
+        print details
         break
     
     # get relationships
