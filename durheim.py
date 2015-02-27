@@ -2,7 +2,7 @@
 
 from bs4 import BeautifulSoup
 import requests
-import shutil
+import shutil, csv
 
 
 BASE_URL = "https://commons.wikimedia.org"
@@ -26,21 +26,22 @@ def run():
                 print "Got " + str(n) + " links to photo pages"
 
     # download photos and get details of persons
+    persons = []
     for link in links:
         r = requests.get(BASE_URL + link)
         soup = BeautifulSoup(r.text)
-        for a in soup.find_all("a"):
-            if "class" in a.attrs and a["class"][0] == "mw-thumbnail-link":
-                # We're getting the preview image shown on the file page as that's an all-right size for now.
-                filename = a.get("href").split("/")[-1]
-                url = "http:" + a.get("href")
-                response = requests.get(url, stream=True)
-                print filename
-                with open(filename, "w") as out_file:
-                    shutil.copyfileobj(response.raw, out_file)
-                del response
-                print "Downloaded photo " + filename
-                #break
+        # for a in soup.find_all("a"):
+        #     if "class" in a.attrs and a["class"][0] == "mw-thumbnail-link":
+        #         # We're getting the preview image shown on the file page as that's an all-right size for now.
+        #         filename = a.get("href").split("/")[-1]
+        #         url = "http:" + a.get("href")
+        #         response = requests.get(url, stream=True)
+        #         print filename
+        #         with open(filename, "w") as out_file:
+        #             shutil.copyfileobj(response.raw, out_file)
+        #         del response
+        #         print "Downloaded photo " + filename
+        #         break
 
         # Details to harvest: person depicted, original caption, link on Swiss Archives
         # Other details are the same for all photos
@@ -51,13 +52,25 @@ def run():
             else:
                 continue
             if tds[0].text in ["Depicted people", "Original caption"]:
-                details[tds[0].text] = tds[1].text
+                details[tds[0].text] = tds[1].text.encode("utf-8")
             elif tds[0].text == "Accession number":
                 details[tds[0].text] = tds[1].a.get("href")
+
+        print details
+        persons.append(details)
+
         #break
+        
+    # Write details of photos into CSV for easier reference
+    headers = ["Depicted people", "Original caption", "Accession number"]
+    with open("details.csv", "w") as f:
+        writer = csv.DictWriter(f, headers)
+        writer.writeheader()
+        for person in persons:
+            writer.writerow(person)
+        print("Wrote row for " + person["Depicted people"])
     
-        # get relationships
-        print details["Original caption"]
+        
         
     # create Neo4j db
     # add persons and relationships to db
