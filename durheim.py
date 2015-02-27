@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from bs4 import BeautifulSoup
 import requests
 import shutil
@@ -38,16 +40,25 @@ def run():
                     shutil.copyfileobj(response.raw, out_file)
                 del response
                 print "Downloaded photo " + filename
-                break
-        
+                #break
+
+        # Details to harvest: person depicted, original caption, link on Swiss Archives
+        # Other details are the same for all photos
         details = {}
-        for tr in soup.table:
-            for key_td, value_td in tr:
-                details[key_td.text] = value_td.text
-        print details
-        break
+        for tr in soup.table.contents:
+            if len(tr) > 1:
+                tds = tr.find_all("td")
+            else:
+                continue
+            if tds[0].text in ["Depicted people", "Original caption"]:
+                details[tds[0].text] = tds[1].text
+            elif tds[0].text == "Accession number":
+                details[tds[0].text] = tds[1].a.get("href")
+        #break
     
-    # get relationships
+        # get relationships
+        print details["Original caption"]
+        
     # create Neo4j db
     # add persons and relationships to db
     
