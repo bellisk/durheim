@@ -4,6 +4,7 @@ import csv
 import sys
 import re
 import string
+import locale
 
 
 RELATIONSHIPS = [
@@ -74,6 +75,7 @@ def run(input_filename):
 
                 person.surname = names.split(", ")[0]
                 person.firstname = names.split(", ")[1]
+                person.details["name"] = person.firstname + " " + person.surname
 
                 # What can we get out of the Personalien?
                 if re.search("([0-9]{2}) Jahre alt", personalien):
@@ -82,13 +84,19 @@ def run(input_filename):
                 if re.search("geboren.* ([0-9]{4})", personalien):
                     person.details["age"] = 1853 - int(re.search("geboren.* ([0-9]{4})", personalien).group(1))
 
+                person.details["relationships"] = {}
+
                 for relationship in RELATIONSHIPS:
                     if relationship in personalien:
-                        print(personalien)
-                        break
+                        m = re.search(relationship + " de(r|s) ([\w .]*)(,|\(|\n| und)?", personalien.decode("utf-8"), re.U)
+                        if m:
+                            print relationship, m.group(2)
+                            person.details["relationships"][relationship] = m.group(2)
+
+                print(person.details["relationships"])
 
                 persons.append(person)
-                print(person.firstname, person.surname, str(person.details))
+                # print(person.firstname, person.surname, str(person.details))
 
             except AttributeError as e:
                 print caption

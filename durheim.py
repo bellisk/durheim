@@ -4,8 +4,7 @@ from bs4 import BeautifulSoup
 import requests
 import shutil, csv
 import csv_parsing
-from py2neo import neo4j, node, rel
-
+import durheim_neo4j
 
 BASE_URL = "https://commons.wikimedia.org"
 CATEGORY_URLS = [
@@ -32,18 +31,19 @@ def run():
     for link in links:
         r = requests.get(BASE_URL + link)
         soup = BeautifulSoup(r.text)
-        # for a in soup.find_all("a"):
-        #     if "class" in a.attrs and a["class"][0] == "mw-thumbnail-link":
-        #         # We're getting the preview image shown on the file page as that's an all-right size for now.
-        #         filename = a.get("href").split("/")[-1]
-        #         url = "http:" + a.get("href")
-        #         response = requests.get(url, stream=True)
-        #         print filename
-        #         with open(filename, "w") as out_file:
-        #             shutil.copyfileobj(response.raw, out_file)
-        #         del response
-        #         print "Downloaded photo " + filename
-        #         break
+
+        for a in soup.find_all("a"):
+            if "class" in a.attrs and a["class"][0] == "mw-thumbnail-link":
+                # We're getting the preview image shown on the file page as that's an all-right size for now.
+                filename = a.get("href").split("/")[-1]
+                url = "http:" + a.get("href")
+                response = requests.get(url, stream=True)
+                print filename
+                with open(filename, "w") as out_file:
+                    shutil.copyfileobj(response.raw, out_file)
+                del response
+                print "Downloaded photo " + filename
+                break
 
         # Details to harvest: person depicted, original caption, link on Swiss Archives
         # Other details are the same for all photos
@@ -61,8 +61,6 @@ def run():
         print details
         persons.append(details)
 
-        # break
-
     # Write details of photos into CSV for easier reference
     headers = ["Depicted people", "Original caption", "Accession number"]
     with open("details.csv", "w") as f:
@@ -76,12 +74,30 @@ def run():
     person_list = csv_parsing.run("details.csv")
     print(person_list)
 
-    # create Neo4j db
-    graph_db = neo4j.GraphDatabaseService("http://localhost:7474/db/data/")
-    personen = graph_db.get_or_create_index(neo4j.Node, "Personen")
+    # Create Neo4j db, add persons and relationships to db
+    durheim_neo4j.run("details.csv")
 
+    # Get data on jobs and nicknames into own CSVs
+    headers2 = ["Name", "Jobs", "Nicknames"]
+    with open("jobs_and_nicknames.csv", "w") as g:
+        writer = csv.DictWriter(g, headers2)
+        writer.writeheader()
+        for person in person_list:
+            row = {
+                "Name": person.details["name"],
+                "Jobs": "",
+                "Nicknames": ""
+            }
 
-    # add persons and relationships to db
+            if "Beruf" in person.details:
+                row["Jobs"] = person.details["Beruf"]
+
+            if "nickname" in person.details:
+                row["Nicknames"] = str(person.details["nickname"])
+
+            if "Beruf" in person.details or "nickname" in person.details:
+                writer.writerow(row)
+
 
 if __name__ == '__main__':
     run()
