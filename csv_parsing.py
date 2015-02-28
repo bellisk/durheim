@@ -49,10 +49,9 @@ def run(input_filename):
                 caption = row["Original caption"]
                 person = Person()
 
+                # Some of the lines have unnecessary newlines. Get rid of them.
                 for m in re.findall("(.+)(\n)([^:]+?\n)", caption):
                     caption = string.replace(caption, m[0] + m[1] + m[2], m[0] + " " + m[2])
-                    print m
-                print caption
 
                 for fieldname in FIELDS:
                     # Separate fields for easier parsing
@@ -65,7 +64,7 @@ def run(input_filename):
                         else:
                             person.details[fieldname] = re.search("\n" + fieldname + ": (.*?)\n", caption).group(1)
 
-                names = re.match("\n(.*?)\n", caption).group(1)
+                names = re.match("\n?(.*?)\n", caption).group(1)
 
                 # Parse out different names
                 for w in ["vulgo", "genannt"]:
@@ -89,14 +88,16 @@ def run(input_filename):
 
                 for relationship in RELATIONSHIPS:
                     if relationship in personalien:
-                        print(personalien)
+                        # print(personalien)
                         break
 
                 persons.append(person)
-                print(person.firstname, person.surname, str(person.details))
+                # print(person.firstname, person.surname, str(person.details))
 
             except AttributeError as e:
+                print caption
                 print e.message
+                print
                 continue
 
 
