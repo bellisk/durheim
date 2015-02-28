@@ -3,6 +3,8 @@
 from bs4 import BeautifulSoup
 import requests
 import shutil, csv
+import csv_parsing
+from py2neo import neo4j, node, rel
 
 
 BASE_URL = "https://commons.wikimedia.org"
@@ -18,7 +20,7 @@ def run():
     for url in CATEGORY_URLS:
         r = requests.get(url)
         soup = BeautifulSoup(r.text)
-        
+
         for div in soup.find_all("div", "gallerytext"):
             links.append(div.a.get("href"))
             n += 1
@@ -59,8 +61,8 @@ def run():
         print details
         persons.append(details)
 
-        #break
-        
+        # break
+
     # Write details of photos into CSV for easier reference
     headers = ["Depicted people", "Original caption", "Accession number"]
     with open("details.csv", "w") as f:
@@ -69,11 +71,17 @@ def run():
         for person in persons:
             writer.writerow(person)
         print("Wrote row for " + person["Depicted people"])
-    
-        
-        
+
+    # Use csv parsing module to get list of persons with details
+    person_list = csv_parsing.run("details.csv")
+    print(person_list)
+
     # create Neo4j db
+    graph_db = neo4j.GraphDatabaseService("http://localhost:7474/db/data/")
+    personen = graph_db.get_or_create_index(neo4j.Node, "Personen")
+
+
     # add persons and relationships to db
-    
+
 if __name__ == '__main__':
     run()

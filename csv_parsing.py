@@ -5,6 +5,7 @@ import sys
 import re
 import string
 
+
 RELATIONSHIPS = [
     "Tochter",
     "Sohn",
@@ -32,11 +33,6 @@ class Person:
         self.surname = ""
         self.firstname = ""
         self.details = {}
-        # self.place = ""
-        # self.relatives = []
-        # self.nickname = ""
-        # self.aliases = []
-        # self.age = ""
 
 
 def run(input_filename):
@@ -88,17 +84,19 @@ def run(input_filename):
 
                 for relationship in RELATIONSHIPS:
                     if relationship in personalien:
-                        # print(personalien)
+                        print(personalien)
                         break
 
                 persons.append(person)
-                # print(person.firstname, person.surname, str(person.details))
+                print(person.firstname, person.surname, str(person.details))
 
             except AttributeError as e:
                 print caption
                 print e.message
                 print
                 continue
+
+        return persons
 
 
 if __name__ == '__main__':
