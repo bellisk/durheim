@@ -49,6 +49,11 @@ def run(input_filename):
                 caption = row["Original caption"]
                 person = Person()
 
+                for m in re.findall("(.+)(\n)([^:]+?\n)", caption):
+                    caption = string.replace(caption, m[0] + m[1] + m[2], m[0] + " " + m[2])
+                    print m
+                print caption
+
                 for fieldname in FIELDS:
                     # Separate fields for easier parsing
                     if fieldname in caption and "\n" + fieldname not in caption:
@@ -60,7 +65,7 @@ def run(input_filename):
                         else:
                             person.details[fieldname] = re.search("\n" + fieldname + ": (.*?)\n", caption).group(1)
 
-                names = re.match("\n?(.*?)\n", caption).group(1)
+                names = re.match("\n(.*?)\n", caption).group(1)
 
                 # Parse out different names
                 for w in ["vulgo", "genannt"]:
@@ -88,7 +93,7 @@ def run(input_filename):
                         break
 
                 persons.append(person)
-                print(str(person.details))
+                print(person.firstname, person.surname, str(person.details))
 
             except AttributeError as e:
                 print e.message
