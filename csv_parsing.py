@@ -18,6 +18,13 @@ RELATIONSHIPS = [
     "Bruder"
 ]
 
+FIELDS = [
+    'Ort',
+    'Beruf',
+    'Kennzeichen',
+    'Personalien'
+]
+
 class Person:
     details = {}
 
@@ -36,31 +43,24 @@ def run(input_filename):
     with open(input_filename) as f:
         persons = []
         reader = csv.DictReader(f)
+
         for row in reader:
             try:
                 caption = row["Original caption"]
                 person = Person()
 
-                # What are the fieldnames?
-                fields = []
-                if re.search("([\w]*):", caption):
-                    fields.append(re.search("([\w]*):", caption).group(1))
-
-                # Separate fields for easier parsing
-                for fieldname in ["Ort", "Beruf"]:
+                for fieldname in FIELDS:
+                    # Separate fields for easier parsing
                     if fieldname in caption and "\n" + fieldname not in caption:
                         caption = string.replace(caption, fieldname, "\n" + fieldname)
+                    if re.search("\n" + fieldname + ": (.*?)\n", caption):
+                        # We parse the Personalien separately later
+                        if fieldname == "Personalien":
+                            personalien = re.search("\n" + fieldname + ": (.*?)\n", caption).group(1)
+                        else:
+                            person.details[fieldname] = re.search("\n" + fieldname + ": (.*?)\n", caption).group(1)
 
-                names = re.search("\n?(.*?)\n", caption).group(1)
-
-                if re.search("\nPersonalien: (.*?)\n", caption):
-                    personalien = re.search("\nPersonalien: (.*?)\n", caption).group(1)
-
-                if re.search("\nOrt: (.*?)\n", caption):
-                    person.details["place"] = re.search("\nOrt: (.*?)\n", caption).group(1)
-
-                if re.search("\nBeruf: (.*?)\n", caption):
-                    person.details["job"] = re.search("\nBeruf: (.*?)\n", caption).group(1)
+                names = re.match("\n?(.*?)\n", caption).group(1)
 
                 # Parse out different names
                 for w in ["vulgo", "genannt"]:
@@ -84,17 +84,16 @@ def run(input_filename):
 
                 for relationship in RELATIONSHIPS:
                     if relationship in personalien:
-                        # print(personalien)
+                        print(personalien)
                         break
 
                 persons.append(person)
-                # print(str(person.details))
+                print(str(person.details))
 
             except AttributeError as e:
                 print e.message
                 continue
 
-        print set(fields)
 
 if __name__ == '__main__':
     input_filename = sys.argv[1]
