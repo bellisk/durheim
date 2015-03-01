@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import os
 from bs4 import BeautifulSoup
 import requests
 import shutil, csv
@@ -35,7 +35,9 @@ def run():
         for a in soup.find_all("a"):
             if "class" in a.attrs and a["class"][0] == "mw-thumbnail-link":
                 # We're getting the preview image shown on the file page as that's an all-right size for now.
-                filename = a.get("href").split("/")[-1]
+                if not os.path.exists("photos"):
+                    os.mkdir("photos")
+                filename = os.path.join("photos", a.get("href").split("/")[-1])
                 url = "http:" + a.get("href")
                 response = requests.get(url, stream=True)
                 print filename
