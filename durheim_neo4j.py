@@ -5,7 +5,7 @@ import json
 from py2neo import neo4j, rel
 
 
-def generage_graph_db(input_filename):
+def generate_graph_db(input_filename):
     # Use csv parsing module to get list of persons with details
     person_list = csv_parsing.run(input_filename)
 
@@ -20,63 +20,92 @@ def generage_graph_db(input_filename):
     n = 0
     for person in person_list:
         properties = {}
-        names.append(person.details["name"])
+        name = person.details["name"]
+
+        if name in names:
+            print("Found a second " + name)
+
+        names.append(name)
 
         for key in person.details:
             if key != "relationships":
                 properties[key] = person.details[key]
 
-        p1 = graph_db.get_or_create_indexed_node("Personen", "name", person.details["name"], properties)
+        p1 = graph_db.get_or_create_indexed_node("Personen", "name", name, properties)
         p1.add_labels("person")
         n += 1
         if n % 20 == 0:
             print("Added " + str(n) + " person nodes to db")
 
+    # add relationships
     for person in person_list:
-        # add relationships
+        name = person.details["name"]
         if person.details["relationships"]:
-            print(person.details["name"])
-            print(person.details["relationships"])
             for relationship in person.details["relationships"]:
-                for name in names:
+                for name_2 in names:
                     # Only create a relationship if we have the related person in the db
                     if name.decode("utf-8") in person.details["relationships"][relationship]:
                         if relationship in ["Sohn", "Tochter"]:
-                            # create child relationship
-                            child = graph_db.get_or_create_indexed_node("Personen", "name", person.details["name"])
-                            parent = graph_db.get_or_create_indexed_node("Personen", "name", name)
-                            graph_db.create(rel(child, "Child of", parent))
-                            print("Created child-parent relationship for " + person.details["name"] + " and " + name)
+                            r_type = "CHILD"
+                            source = name
+                            target = name_2
                         elif relationship in ["Vater", "Mutter"]:
-                            # create parent relationship
-                            child = graph_db.get_or_create_indexed_node("Personen", "name", name)
-                            parent = graph_db.get_or_create_indexed_node("Personen", "name", person.details["name"])
-                            graph_db.create(rel(child, "Child of", parent))
-                            print("Created parent-child relationship for " + person.details["name"] + " and " + name)
+                            r_type = "CHILD"
+                            source = name_2
+                            target = name
                         elif relationship in ["Beihälter", "Beihälterin", "Ehefrau", "Ehemann"]:
-                            # create partner relationship
-                            p1 = graph_db.get_or_create_indexed_node("Personen", "name", name)
-                            p2 = graph_db.get_or_create_indexed_node("Personen", "name", person.details["name"])
-                            graph_db.create(rel(p1, "Partner to", p2))
-                            print("Created partner relationship for " + person.details["name"] + " and " + name)
+                            r_type = "PARTNER"
+                            source = name_2
+                            target = name
                         elif relationship in ["Schwester", "Bruder"]:
-                            # create sibling relationship
-                            s1 = graph_db.get_or_create_indexed_node("Personen", "name", name)
-                            s2 = graph_db.get_or_create_indexed_node("Personen", "name", person.details["name"])
-                            graph_db.create(rel(s1, "Sibling to", s2))
-                            print("Created sibling relationship for " + person.details["name"] + " and " + name)
+                            r_type = "SIBLING"
+                            source = name_2
+                            target = name
+
+                        s = graph_db.get_or_create_indexed_node("Personen", "name", source)
+                        t = graph_db.get_or_create_indexed_node("Personen", "name", target)
+                        properties = {"type": r_type}
+
+                        graph_db.create(rel(s, (r_type, properties), t))
+                        print("Created " + r_type + " relationship for " + source + " and " + target)
 
         # add places
         if "Ort" in person.details:
             p1 = graph_db.get_or_create_indexed_node("Personen", "name", person.details["name"])
             place = graph_db.get_or_create_indexed_node("Places", "place", person.details["Ort"], {"placename": person.details["Ort"]})
             place.add_labels("place")
-            graph_db.create(rel(p1, "Comes from", place))
-            print("Created 'comes from' relationship for " + person.details["name"] + " and " + person.details["Ort"])
+            properties = {"type": "FROM"}
+            graph_db.create(rel(p1, ("FROM", properties), place))
+            print("Created FROM relationship for " + person.details["name"] + " and " + person.details["Ort"])
+
+
+def add_implied_relationships():
+    graph_db = neo4j.GraphDatabaseService("http://localhost:7474/db/data/")
+    query = neo4j.CypherQuery(
+        graph_db,
+        "MATCH (a:person)<-[r1:CHILD]-(b:person)-[r2:CHILD]->(c:person) "
+        "WHERE NOT (a)-[]-(c) "
+        "RETURN a, c"
+    )
+    results = query.execute()
+    properties = {"type": "PARTNER"}
+    partners = {}
+
+    for source, target in results:
+        if source["name"] in partners and partners[source["name"]] == target["name"]:
+            continue
+        elif target["name"] in partners and partners[target["name"]] == source["name"]:
+            continue
+
+        graph_db.create(rel(source, ("PARTNER", properties), target))
+        partners[source["name"]] = target["name"]
+        print("Created implied PARTNER relationship for " + source["name"] + " and " + target["name"])
 
 
 def get_graph():
     graph_db = neo4j.GraphDatabaseService("http://localhost:7474/db/data/")
+
+    # Interpersonal relationships
     query = neo4j.CypherQuery(
         graph_db,
         "MATCH (a:person)-[r]->(b:person) "
@@ -99,5 +128,6 @@ def get_graph():
 
 
 if __name__ == '__main__':
-    # generate_graph_db('details.csv')
-    get_graph()
+    generate_graph_db('details.csv')
+    add_implied_relationships()
+    # get_graph()
