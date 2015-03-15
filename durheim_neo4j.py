@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 
 import csv_parsing
+import json
 from py2neo import neo4j, rel
 
 
-def run(input_filename):
+def generage_graph_db(input_filename):
     # Use csv parsing module to get list of persons with details
     person_list = csv_parsing.run(input_filename)
 
     # create Neo4j db
     graph_db = neo4j.GraphDatabaseService("http://localhost:7474/db/data/")
     personen = graph_db.get_or_create_index(neo4j.Node, "Personen")
-    personen = graph_db.get_or_create_index(neo4j.Node, "Places")
+    places = graph_db.get_or_create_index(neo4j.Node, "Places")
     print("Created Neo4j db")
 
     # add persons
@@ -74,6 +75,29 @@ def run(input_filename):
             print("Created 'comes from' relationship for " + person.details["name"] + " and " + person.details["Ort"])
 
 
+def get_graph():
+    graph_db = neo4j.GraphDatabaseService("http://localhost:7474/db/data/")
+    query = neo4j.CypherQuery(
+        graph_db,
+        "MATCH (a:person)-[r]->(b:person) "
+        "RETURN a, r, b"
+    )
+    results = query.execute()
+    nodes = []
+    rels = []
+    i = 0
+    names = {}
+    for p1, r1, p2 in results:
+        for p in (p1, p2):
+            if p["name"] not in names:
+                nodes.append({"title": p["name"], "label": "person", "id": i})
+                names[p["name"]] = i
+                i += 1
+        rels.append({"source": names[p1["name"]], "target": names[p2["name"]], "type": r1.type})
+    print json.dumps({"nodes": nodes, "links": rels})
+    print len(nodes)
+
 
 if __name__ == '__main__':
-    run()
+    # generate_graph_db('details.csv')
+    get_graph()

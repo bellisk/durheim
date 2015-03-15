@@ -1,0 +1,66 @@
+<html>
+    <head>
+    </head>
+    <body>
+        <style type="text/css">
+            .node { stroke: #222; stroke-width: 1.5px; }
+            .node.person { fill: #888; }
+            .node.place { fill: #BBB; }
+            .link { stroke: #999; stroke-opacity: .6; stroke-width: 1px; }
+            .Child { stroke: #FF0000; }
+            .Partner { stroke: #00FF00; }
+            .Sibling { stroke: #0000FF; }
+        </style>
+        <div id="graph"></div>
+        <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+        <script>
+            var graph = {"nodes": [{"label": "person", "id": 0, "title": "Agatha Ostertag"}, {"label": "person", "id": 1, "title": "Cajetan Ostertag"}, {"label": "person", "id": 2, "title": "Anna Elisabeth Vollmann"}, {"label": "person", "id": 3, "title": "Anton Vollmann"}, {"label": "person", "id": 4, "title": "Theresia Lauber"}, {"label": "person", "id": 5, "title": "Anna K\u00fcbler"}, {"label": "person", "id": 6, "title": "Anna Maria Bergdorf"}, {"label": "person", "id": 7, "title": "Anna Maria Strasser"}, {"label": "person", "id": 8, "title": "Joseph Bergdorf"}, {"label": "person", "id": 9, "title": "Urs Joseph Bergdorf"}, {"label": "person", "id": 10, "title": "Anna Maria M\u00e4schli"}, {"label": "person", "id": 11, "title": "Clara Wendel"}, {"label": "person", "id": 12, "title": "Anna Maria Wagner"}, {"label": "person", "id": 13, "title": "Bernhard Suter"}, {"label": "person", "id": 14, "title": "Anton M\u00fcller"}, {"label": "person", "id": 15, "title": "Johann M\u00fcller"}, {"label": "person", "id": 16, "title": "Anton Wendelmeier"}, {"label": "person", "id": 17, "title": "Anna Maria T\u00e4llenbach"}, {"label": "person", "id": 18, "title": "Appollonia Brutschi"}, {"label": "person", "id": 19, "title": "Regina Brutschi"}, {"label": "person", "id": 20, "title": "Barbara Brutschi"}, {"label": "person", "id": 21, "title": "Maria Verena Brutschi"}, {"label": "person", "id": 22, "title": "Barbara Wagner"}, {"label": "person", "id": 23, "title": "Barbara Wendelmeier"}, {"label": "person", "id": 24, "title": "Bernhard Weing\u00e4rtner"}, {"label": "person", "id": 25, "title": "Bartholom\u00e4us Ackermann"}, {"label": "person", "id": 26, "title": "Caspar Wendelmeier"}, {"label": "person", "id": 27, "title": "Catharina Bergdorf"}, {"label": "person", "id": 28, "title": "Catharina Malter"}, {"label": "person", "id": 29, "title": "Alois Malter"}, {"label": "person", "id": 30, "title": "Catharina Ostertag"}, {"label": "person", "id": 31, "title": "Clemens Ostertag"}, {"label": "person", "id": 32, "title": "Crescentia Schneider"}, {"label": "person", "id": 33, "title": "Felix Schneider"}, {"label": "person", "id": 34, "title": "Georg H\u00f6gert"}, {"label": "person", "id": 35, "title": "Marianna Meyer"}, {"label": "person", "id": 36, "title": "Jacob Scherr"}, {"label": "person", "id": 37, "title": "Anna Maria Scherr"}, {"label": "person", "id": 38, "title": "Johann Baptist Bergdorf"}, {"label": "person", "id": 39, "title": "Johann Georg Wendelmeier"}, {"label": "person", "id": 40, "title": "Johann Kleinmann"}, {"label": "person", "id": 41, "title": "Francisca R\u00fcegg"}, {"label": "person", "id": 42, "title": "Georg Kleinmann"}, {"label": "person", "id": 43, "title": "Johann Mai"}, {"label": "person", "id": 44, "title": "Elisabeth Merz"}, {"label": "person", "id": 45, "title": "Johann Ostertag"}, {"label": "person", "id": 46, "title": "Johann Schneider"}, {"label": "person", "id": 47, "title": "Johann W\u00e4chter"}, {"label": "person", "id": 48, "title": "Barbara W\u00e4chter"}, {"label": "person", "id": 49, "title": "Joseph Mai"}, {"label": "person", "id": 50, "title": "Joseph Sebastian Duckheim"}, {"label": "person", "id": 51, "title": "Katharina Duckheim"}, {"label": "person", "id": 52, "title": "Joseph Wagner"}, {"label": "person", "id": 53, "title": "Joseph Wendelmeier"}, {"label": "person", "id": 54, "title": "Joseph Wiesenfath"}, {"label": "person", "id": 55, "title": "Magdalena Bergdorf"}, {"label": "person", "id": 56, "title": "Magdalena Kleinmann"}, {"label": "person", "id": 57, "title": "Magdalena Lauber"}, {"label": "person", "id": 58, "title": "Magdalena Ostertag"}, {"label": "person", "id": 59, "title": "Maria Keller"}, {"label": "person", "id": 60, "title": "Magadalena W\u00e4chter"}, {"label": "person", "id": 61, "title": "Maria Magdalena H\u00f6gert"}, {"label": "person", "id": 62, "title": "Marianne Christiane M\u00fcller"}, {"label": "person", "id": 63, "title": "Maria M\u00fcller"}, {"label": "person", "id": 64, "title": "Marie Louise Bouvroz"}, {"label": "person", "id": 65, "title": "Fran\u00e7ois Hyppolite Bouvroz"}, {"label": "person", "id": 66, "title": "Maria Magdalena Avondo"}, {"label": "person", "id": 67, "title": "Philippe Bouvroz"}, {"label": "person", "id": 68, "title": "Rachel Brutschi"}, {"label": "person", "id": 69, "title": "Samuel Wagner"}, {"label": "person", "id": 70, "title": "Sebastian M\u00fcller"}, {"label": "person", "id": 71, "title": "Josephine K\u00f6nig"}, {"label": "person", "id": 72, "title": "Susanna Kleinmann"}, {"label": "person", "id": 73, "title": "Theresia Duardt"}, {"label": "person", "id": 74, "title": "Elisabeth Duardt"}, {"label": "person", "id": 75, "title": "Theresia Kleinmann"}, {"label": "person", "id": 76, "title": "Theresia Malter"}, {"label": "person", "id": 77, "title": "Valeria Brutschi"}, {"label": "person", "id": 78, "title": "Verena Wagner"}, {"label": "person", "id": 79, "title": "Wendelinus Grether"}, {"label": "person", "id": 80, "title": "Anna Maria Grether"}, {"label": "person", "id": 81, "title": "Wilhelm W\u00e4chter"}, {"label": "person", "id": 82, "title": "Xaver Wagner"}], "links": [{"source": 0, "type": "Child of", "target": 1}, {"source": 2, "type": "Child of", "target": 3}, {"source": 2, "type": "Child of", "target": 4}, {"source": 5, "type": "Child of", "target": 3}, {"source": 5, "type": "Child of", "target": 4}, {"source": 6, "type": "Child of", "target": 7}, {"source": 6, "type": "Child of", "target": 8}, {"source": 6, "type": "Child of", "target": 9}, {"source": 10, "type": "Child of", "target": 11}, {"source": 12, "type": "Child of", "target": 13}, {"source": 14, "type": "Sibling to", "target": 15}, {"source": 16, "type": "Partner to", "target": 17}, {"source": 18, "type": "Child of", "target": 19}, {"source": 20, "type": "Child of", "target": 21}, {"source": 22, "type": "Child of", "target": 13}, {"source": 23, "type": "Child of", "target": 16}, {"source": 24, "type": "Child of", "target": 25}, {"source": 26, "type": "Child of", "target": 17}, {"source": 26, "type": "Child of", "target": 16}, {"source": 27, "type": "Child of", "target": 7}, {"source": 27, "type": "Child of", "target": 8}, {"source": 27, "type": "Child of", "target": 9}, {"source": 28, "type": "Child of", "target": 29}, {"source": 30, "type": "Child of", "target": 1}, {"source": 31, "type": "Child of", "target": 1}, {"source": 32, "type": "Child of", "target": 32}, {"source": 33, "type": "Child of", "target": 32}, {"source": 34, "type": "Partner to", "target": 35}, {"source": 36, "type": "Child of", "target": 37}, {"source": 38, "type": "Child of", "target": 7}, {"source": 38, "type": "Child of", "target": 8}, {"source": 38, "type": "Child of", "target": 9}, {"source": 39, "type": "Child of", "target": 16}, {"source": 40, "type": "Child of", "target": 41}, {"source": 40, "type": "Child of", "target": 42}, {"source": 43, "type": "Partner to", "target": 44}, {"source": 43, "type": "Partner to", "target": 44}, {"source": 45, "type": "Child of", "target": 1}, {"source": 46, "type": "Child of", "target": 15}, {"source": 46, "type": "Child of", "target": 15}, {"source": 47, "type": "Child of", "target": 48}, {"source": 8, "type": "Child of", "target": 9}, {"source": 8, "type": "Child of", "target": 8}, {"source": 8, "type": "Partner to", "target": 7}, {"source": 49, "type": "Child of", "target": 43}, {"source": 49, "type": "Child of", "target": 43}, {"source": 50, "type": "Child of", "target": 25}, {"source": 50, "type": "Child of", "target": 51}, {"source": 52, "type": "Child of", "target": 12}, {"source": 52, "type": "Child of", "target": 12}, {"source": 52, "type": "Child of", "target": 13}, {"source": 53, "type": "Child of", "target": 17}, {"source": 53, "type": "Child of", "target": 16}, {"source": 54, "type": "Child of", "target": 17}, {"source": 54, "type": "Child of", "target": 16}, {"source": 55, "type": "Child of", "target": 7}, {"source": 55, "type": "Child of", "target": 8}, {"source": 55, "type": "Child of", "target": 9}, {"source": 56, "type": "Child of", "target": 42}, {"source": 57, "type": "Child of", "target": 3}, {"source": 58, "type": "Child of", "target": 1}, {"source": 58, "type": "Child of", "target": 59}, {"source": 60, "type": "Child of", "target": 48}, {"source": 61, "type": "Child of", "target": 34}, {"source": 21, "type": "Sibling to", "target": 19}, {"source": 62, "type": "Child of", "target": 63}, {"source": 64, "type": "Child of", "target": 65}, {"source": 64, "type": "Child of", "target": 66}, {"source": 64, "type": "Child of", "target": 66}, {"source": 67, "type": "Child of", "target": 65}, {"source": 68, "type": "Child of", "target": 19}, {"source": 69, "type": "Child of", "target": 13}, {"source": 70, "type": "Child of", "target": 71}, {"source": 70, "type": "Child of", "target": 70}, {"source": 70, "type": "Child of", "target": 70}, {"source": 70, "type": "Partner to", "target": 71}, {"source": 70, "type": "Partner to", "target": 71}, {"source": 72, "type": "Child of", "target": 42}, {"source": 73, "type": "Child of", "target": 74}, {"source": 75, "type": "Child of", "target": 42}, {"source": 76, "type": "Child of", "target": 28}, {"source": 9, "type": "Partner to", "target": 7}, {"source": 77, "type": "Child of", "target": 21}, {"source": 78, "type": "Child of", "target": 12}, {"source": 78, "type": "Child of", "target": 12}, {"source": 78, "type": "Child of", "target": 13}, {"source": 79, "type": "Child of", "target": 80}, {"source": 81, "type": "Child of", "target": 48}, {"source": 82, "type": "Child of", "target": 12}, {"source": 82, "type": "Child of", "target": 12}]};
+            var width = 800, height = 800;
+
+            var force = d3.layout.force()
+                    .charge(-200).linkDistance(30).size([width, height]);
+
+
+            var svg = d3.select("#graph").append("svg")
+                    .attr("width", "100%").attr("height", "100%")
+                    .attr("pointer-events", "all");
+
+            force.nodes(graph.nodes).links(graph.links).start();
+
+            var link = svg.selectAll(".link")
+                    .data(graph.links).enter()
+                    .append("line").attr("class", function (d) { return "link " + d.type });
+
+            var node = svg.selectAll(".node")
+                    .data(graph.nodes).enter()
+                    .append("svg")
+                    .attr("onclick", function (d) { return "alert('" + d.title + "')" })
+                    .call(force.drag);
+            node
+                    .append("text")
+                    .attr("x", 26).attr("y", 17)
+                    .text(function (d) { return d.title; });
+            node
+                    .append("circle")
+                    .attr("class", function (d) { return "node "+d.label })
+                    .attr("cx", 12).attr("cy", 12)
+                    .attr("r", 10);
+
+            force.on("tick", function() {
+                link.attr("x1", function(d) { return d.source.x; })
+                        .attr("y1", function(d) { return d.source.y; })
+                        .attr("x2", function(d) { return d.target.x; })
+                        .attr("y2", function(d) { return d.target.y; });
+
+                node.attr("x", function(d) { return d.x - 12; })
+                        .attr("y", function(d) { return d.y - 12; });
+            });
+        </script>
+    </body>
+
+</html>
+
+
+
+
+
