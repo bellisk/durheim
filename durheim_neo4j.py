@@ -17,13 +17,14 @@ def generate_graph_db(input_filename):
 
     # add persons
     names = []
+    dupe_names = []
     n = 0
     for person in person_list:
         properties = {}
         name = person.details["name"]
 
         if name in names:
-            print("Found a second " + name)
+            dupe_names.append(name)
 
         names.append(name)
 
@@ -34,40 +35,23 @@ def generate_graph_db(input_filename):
         p1 = graph_db.get_or_create_indexed_node("Personen", "name", name, properties)
         p1.add_labels("person")
         n += 1
+
         if n % 20 == 0:
             print("Added " + str(n) + " person nodes to db")
 
+    print(dupe_names)
+    difficult_relationships = []
+
     # add relationships
     for person in person_list:
-        name = person.details["name"]
-        if person.details["relationships"]:
-            for relationship in person.details["relationships"]:
-                for name_2 in names:
-                    # Only create a relationship if we have the related person in the db
-                    if name.decode("utf-8") in person.details["relationships"][relationship]:
-                        if relationship in ["Sohn", "Tochter"]:
-                            r_type = "CHILD"
-                            source = name
-                            target = name_2
-                        elif relationship in ["Vater", "Mutter"]:
-                            r_type = "CHILD"
-                            source = name_2
-                            target = name
-                        elif relationship in ["Beihälter", "Beihälterin", "Ehefrau", "Ehemann"]:
-                            r_type = "PARTNER"
-                            source = name_2
-                            target = name
-                        elif relationship in ["Schwester", "Bruder"]:
-                            r_type = "SIBLING"
-                            source = name_2
-                            target = name
+        source_name = person.details["name"]
 
-                        s = graph_db.get_or_create_indexed_node("Personen", "name", source)
-                        t = graph_db.get_or_create_indexed_node("Personen", "name", target)
-                        properties = {"type": r_type}
+        # There are some annoying cases that need to be done by hand
+        if source_name in dupe_names or "Joseph Bergdorf" in source_name:
+            difficult_relationships.append(person)
+            continue
 
-                        graph_db.create(rel(s, (r_type, properties), t))
-                        print("Created " + r_type + " relationship for " + source + " and " + target)
+        add_relationships(person, names)
 
         # add places
         if "Ort" in person.details:
@@ -76,8 +60,42 @@ def generate_graph_db(input_filename):
             place.add_labels("place")
             properties = {"type": "FROM"}
             graph_db.create(rel(p1, ("FROM", properties), place))
-            print("Created FROM relationship for " + person.details["name"] + " and " + person.details["Ort"])
+            # print("Created FROM relationship for " + person.details["name"] + " and " + person.details["Ort"])
 
+    print(difficult_relationships)
+
+    for person in difficult_relationships:
+        add_relationships(person, names)
+
+def add_relationships(person, names):
+    source_name = person.details["name"]
+    graph_db = neo4j.GraphDatabaseService("http://localhost:7474/db/data/")
+    if person.details["relationships"]:
+        for relationship in person.details["relationships"]:
+            for target_name in names:
+                # Only create a relationship if we have the related person in the db
+                if target_name.decode("utf-8") in person.details["relationships"][relationship]:
+                    if target_name == "Joseph Bergdorf":
+                        if "Urs Joseph Bergdorf" in person.details["relationships"][relationship]:
+                            continue
+                    if relationship in ["Sohn", "Tochter"]:
+                        r_type = "CHILD"
+                    elif relationship in ["Vater", "Mutter"]:
+                        r_type = "CHILD"
+                        old_source_name = source_name
+                        source_name = target_name
+                        target_name = old_source_name
+                    elif relationship in ["Beihälter", "Beihälterin", "Ehefrau", "Ehemann"]:
+                        r_type = "PARTNER"
+                    elif relationship in ["Schwester", "Bruder"]:
+                        r_type = "SIBLING"
+
+                    s = graph_db.get_or_create_indexed_node("Personen", "name", source_name)
+                    t = graph_db.get_or_create_indexed_node("Personen", "name", target_name)
+                    properties = {"type": r_type}
+
+                    graph_db.create(rel(s, (r_type, properties), t))
+                    # print("Created " + r_type + " relationship for " + source_name + " and " + target_name)
 
 def add_implied_relationships():
     graph_db = neo4j.GraphDatabaseService("http://localhost:7474/db/data/")
@@ -129,5 +147,5 @@ def get_graph():
 
 if __name__ == '__main__':
     generate_graph_db('details.csv')
-    add_implied_relationships()
+    # add_implied_relationships()
     # get_graph()
