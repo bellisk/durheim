@@ -2,7 +2,7 @@
 
 import csv_parsing
 import json
-from py2neo import neo4j, rel
+from py2neo import neo4j, rel, exceptions
 
 
 def generate_graph_db(input_filename):
@@ -23,49 +23,41 @@ def generate_graph_db(input_filename):
         properties = {}
         name = person.details["name"]
 
-        if name in names:
-            dupe_names.append(name)
-
-        names.append(name)
-
         for key in person.details:
             if key != "relationships":
                 properties[key] = person.details[key]
 
-        p1 = graph_db.get_or_create_indexed_node("Personen", "name", name, properties)
+        if name in names:
+            dupe_names.append(name)
+            p1 = personen.create("name", name + " 2", properties)
+        else:
+            p1 = personen.create("name", name, properties)
+
         p1.add_labels("person")
         n += 1
+        names.append(name)
 
         if n % 20 == 0:
             print("Added " + str(n) + " person nodes to db")
 
     print(dupe_names)
-    difficult_relationships = []
 
     # add relationships
     for person in person_list:
-        source_name = person.details["name"]
-
-        # There are some annoying cases that need to be done by hand
-        if source_name in dupe_names or "Joseph Bergdorf" in source_name:
-            difficult_relationships.append(person)
-            continue
-
         add_relationships(person, names)
 
         # add places
         if "Ort" in person.details:
-            p1 = graph_db.get_or_create_indexed_node("Personen", "name", person.details["name"])
-            place = graph_db.get_or_create_indexed_node("Places", "place", person.details["Ort"], {"placename": person.details["Ort"]})
-            place.add_labels("place")
-            properties = {"type": "FROM"}
-            graph_db.create(rel(p1, ("FROM", properties), place))
-            # print("Created FROM relationship for " + person.details["name"] + " and " + person.details["Ort"])
+            try:
+                p1 = personen.get("name", person.details["name"].decode("utf-8"))[0]
+                place = graph_db.get_or_create_indexed_node("Places", "place", person.details["Ort"], {"placename": person.details["Ort"].decode("utf-8")})
+                place.add_labels("place")
+                properties = {"type": "FROM"}
+                graph_db.create(rel(p1, ("FROM", properties), place))
+                # print("Created FROM relationship for " + person.details["name"] + " and " + person.details["Ort"])
+            except exceptions.ServerError:
+                print(person.details["name"], "FROM", person.details["Ort"])
 
-    print(difficult_relationships)
-
-    for person in difficult_relationships:
-        add_relationships(person, names)
 
 def add_relationships(person, names):
     source_name = person.details["name"]
@@ -90,12 +82,18 @@ def add_relationships(person, names):
                     elif relationship in ["Schwester", "Bruder"]:
                         r_type = "SIBLING"
 
-                    s = graph_db.get_or_create_indexed_node("Personen", "name", source_name)
-                    t = graph_db.get_or_create_indexed_node("Personen", "name", target_name)
-                    properties = {"type": r_type}
+                    personen = graph_db.get_or_create_index(neo4j.Node, "Personen")
 
-                    graph_db.create(rel(s, (r_type, properties), t))
-                    # print("Created " + r_type + " relationship for " + source_name + " and " + target_name)
+                    # There are ambiguous relationships that need to be added by hand
+                    if personen.get("name", source_name.decode("utf-8") + " 2") or personen.get("name", target_name.decode("utf-8") + " 2"):
+                        print(source_name, r_type, target_name)
+                    else:
+                        s = personen.get("name", source_name.decode("utf-8"))
+                        t = personen.get("name", target_name.decode("utf-8"))
+                        properties = {"type": r_type}
+                        graph_db.create(rel(s[0], (r_type, properties), t[0]))
+                        # print("Created " + r_type + " relationship for " + source_name + " and " + target_name)
+
 
 def add_implied_relationships():
     graph_db = neo4j.GraphDatabaseService("http://localhost:7474/db/data/")
